@@ -1,0 +1,13 @@
+syntax = "proto3";
+package clock;
+
+//import "google/protobuf/timestamp.proto";
+
+message TimestampMessage {
+  string timestamp = 1;
+}
+
+service ClockService {
+  rpc GetTimestamp(TimestampMessage) returns (TimestampMessage);
+  rpc StreamTimestamp(TimestampMessage) returns (stream TimestampMessage);
+}

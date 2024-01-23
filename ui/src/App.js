@@ -9,7 +9,7 @@ const TableRow = ({ index, staticData, onUpdate }) => {
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      const newData = await fetchData(); // Replace with your actual fetching logic
+      const newData = await fetchData(index); // Pass the index to identify the endpoint
       setData(newData);
       setLastRefreshed(new Date().toLocaleTimeString());
       onUpdate(index, newData);
@@ -19,11 +19,14 @@ const TableRow = ({ index, staticData, onUpdate }) => {
   };
 
   // Simulate fetching data
-  const fetchData = () => {
+  const fetchData = (index) => {
+    const endpoints = ['endpoint1', 'endpoint2', 'endpoint3'];
+    const endpoint = endpoints[index];
+
     return new Promise(resolve => {
       setTimeout(() => {
-        // Simulating an API call
-        resolve(`Refreshed Data ${index}`);
+        // Simulating an API call with different endpoints
+        resolve(`Refreshed Data ${index} from ${endpoint}`);
       }, 1000);
     });
   };
