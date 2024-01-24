@@ -13,6 +13,7 @@ class ClockServer(ClockServiceServicer):
         timestamp = timestamp_pb2.Timestamp()
         timestamp.GetCurrentTime()
         formatted_timestamp = self.format_timestamp(timestamp)
+        print(f"Responding GetTimestamp with {formatted_timestamp}")
         return TimestampMessage(timestamp=formatted_timestamp)
 
     def StreamTimestamp(self, request, context):
@@ -21,6 +22,7 @@ class ClockServer(ClockServiceServicer):
             timestamp = timestamp_pb2.Timestamp()
             timestamp.GetCurrentTime()
             formatted_timestamp = self.format_timestamp(timestamp)
+            print(f"Responding StreamTimestamp with {formatted_timestamp}")
             yield TimestampMessage(timestamp=formatted_timestamp)
 
     @staticmethod

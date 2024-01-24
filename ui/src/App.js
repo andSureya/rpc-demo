@@ -1,58 +1,6 @@
 import React, { useState } from 'react';
 import './App.css'; // Don't forget to create a corresponding CSS file
-
-const TableRow = ({ index, staticData, onUpdate }) => {
-  const [data, setData] = useState(staticData);
-  const [loading, setLoading] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState('');
-
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      const newData = await fetchData(index); // Pass the index to identify the endpoint
-      setData(newData);
-      setLastRefreshed(new Date().toLocaleTimeString());
-      onUpdate(index, newData);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Simulate fetching data
-  const fetchData = (index) => {
-    const endpoints = ['endpoint1', 'endpoint2', 'endpoint3'];
-    const endpoint = endpoints[index];
-
-    return new Promise(resolve => {
-      setTimeout(() => {
-        // Simulating an API call with different endpoints
-        resolve(`Refreshed Data ${index} from ${endpoint}`);
-      }, 1000);
-    });
-  };
-
-  return (
-    <tr>
-      <td>
-        {loading ? (
-          <div>
-            Loading...
-          </div>
-        ) : (
-          <div>
-            {data}
-            {lastRefreshed && <div>Last Refreshed at: {lastRefreshed}</div>}
-          </div>
-        )}
-      </td>
-      <td>
-        <button onClick={handleRefresh} disabled={loading}>
-          Refresh
-        </button>
-      </td>
-    </tr>
-  );
-};
+import TableRow from './TableRow'; // Assuming TableRow is in the same directory
 
 const App = () => {
   const staticContents = ['Static Content 1', 'Static Content 2', 'Static Content 3'];

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FastAPI Table Example</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+</head>
+<body>
+
+<h2>RPC demo</h2>
+
+<table>
+    <tr>
+        <th>{{ table_data[0].header1 }}</th>
+        <th>{{ table_data[0].header2 }}</th>
+        <th>{{ table_data[0].header3 }}</th>
+    </tr>
+    <tr>
+        <td>{{ table_data[1].header1 }}</td>
+        <td>{{ table_data[1].header2 }}</td>
+        <td>{{ table_data[1].header3 }}</td>
+    </tr>
+    <tr>
+        <td>{{ table_data[2].header1 }}</td>
+        <td>{{ table_data[2].header2 }}</td>
+        <td>{{ table_data[2].header3 }}</td>
+    </tr>
+     <tr>
+        <td>{{ table_data[3].header1 }}</td>
+        <td>{{ table_data[3].header2 }}</td>
+        <td>{{ table_data[3].header3 }}</td>
+    </tr>
+</table>
+
+</body>
+</html>
