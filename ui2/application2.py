@@ -51,8 +51,8 @@ def generate_updates(request: Request):
                 }
             )
             html_content = templates.TemplateResponse("index.html", {"table_data": table_data, "request": request}).body
-            yield HTMLResponse(html_content)
-            time.sleep(1)
+            yield html_content
+            time.sleep(100)
             # await asyncio.sleep(0)
 
     return StreamingResponse(get_streaming_data(request))

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ClockServiceClient } from './ClockGRPCPb';
-import TimestampMessage from './ClockPb'
+
 import { grpc } from 'grpc-web-client';
 
 const TableRow = ({ index, staticData, onUpdate }) => {
@@ -28,53 +28,58 @@ const TableRow = ({ index, staticData, onUpdate }) => {
   }, [index]); // Run this effect whenever the index changes
 
   const handleGetTimestamp = async () => {
-    setLoading(true);
-    try {
-      // Replace 'your-grpc-server-url' and appropriate package/service names
-      const client = new ClockServiceClient('localhost:50051', null, null);
+  setLoading(true);
+  try {
 
-      const response = await grpc.unary(ClockServiceClient.GetTimestamp, {
-        request: new TimestampMessage(),
-      });
+    const client = new ClockServiceClient('http://localhost:50051', null, null);
 
-      const timestamp = response.message.toObject().timestamp;
-      setData(timestamp);
-      setLastRefreshed(new Date().toLocaleTimeString());
-      onUpdate(index, timestamp);
-    } catch (error) {
-      console.error('Error calling GetTimestamp:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    var messages = require('./ClockPb');
 
-  const handleStreamTimestamp = () => {
-  // Initialize the streaming call
-  const stream = grpc.invoke(ClockServiceClient.StreamTimestamp, {
-    request: new TimestampMessage(),
-    onMessage: (response) => {
-      const timestamp = response.toObject().timestamp;
-      setData(timestamp);
-      setLastRefreshed(new Date().toLocaleTimeString());
-    },
-    onEnd: (code, message, trailers) => {
-      // Handle stream closure
-      if (code === grpc.Code.OK) {
-        console.log('Stream completed successfully');
-      } else {
-        console.error(`Stream closed with error: ${code}, message: ${message}`);
-      }
-    },
-  });
+    const response = await grpc.unary(ClockServiceClient.GetTimestamp, {
+      request: new messages.TimestampMessage(),
+      host: 'http://localhost:50051',
+    });
 
-  // Cleanup the streaming call when the component unmounts
-  return () => {
-    // Close the streaming call (if not already closed)
-    if (stream) {
-      stream.close();
-    }
-  };
+
+    const timestamp = response.message.toObject().timestamp;
+    setData(timestamp);
+    setLastRefreshed(new Date().toLocaleTimeString());
+    onUpdate(index, timestamp);
+  } catch (error) {
+    console.error('Error calling GetTimestamp:', error);
+  } finally {
+    setLoading(false);
+  }
 };
+
+//   const handleStreamTimestamp = () => {
+//   // Initialize the streaming call
+//     var messages = require('./ClockPb');
+//   const stream = grpc.invoke(ClockServiceClient.StreamTimestamp, {
+//     request: new messages.TimestampMessage(),
+//     onMessage: (response) => {
+//       const timestamp = response.toObject().timestamp;
+//       setData(timestamp);
+//       setLastRefreshed(new Date().toLocaleTimeString());
+//     },
+//     onEnd: (code, message, trailers) => {
+//       // Handle stream closure
+//       if (code === grpc.Code.OK) {
+//         console.log('Stream completed successfully');
+//       } else {
+//         console.error(`Stream closed with error: ${code}, message: ${message}`);
+//       }
+//     },
+//   });
+//
+//   // Cleanup the streaming call when the component unmounts
+//   return () => {
+//     // Close the streaming call (if not already closed)
+//     if (stream) {
+//       stream.close();
+//     }
+//   };
+// };
 
   const handleApiCall = async () => {
     setLoading(true);
