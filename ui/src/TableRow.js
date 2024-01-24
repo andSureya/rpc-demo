@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ClockServiceClient } from './ClockGRPCPb';
-import { TimestampMessage } from './clock_pb'
+import TimestampMessage from './ClockPb'
 import { grpc } from 'grpc-web-client';
 
 const TableRow = ({ index, staticData, onUpdate }) => {
