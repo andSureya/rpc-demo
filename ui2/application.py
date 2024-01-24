@@ -1,87 +1,122 @@
+from fastapi import FastAPI, WebSocket
+import requests
+import pendulum
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, Request, BackgroundTasks
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from starlette.requests import Request
+from starlette.responses import HTMLResponse
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
+
+from clock_pb2_grpc import ClockServiceStub
+from clock_pb2 import TimestampMessage
 import grpc
-import time
 
-import clock_pb2_grpc
-from backend.clock_pb2 import TimestampMessage
 
 app = FastAPI()
-
 # Mount the "static" directory to serve static files like CSS
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 # Create an instance of the Jinja2Templates class
 templates = Jinja2Templates(directory="templates")
 
-stub = clock_pb2_grpc.ClockServiceStub(grpc.insecure_channel('localhost:50051'))
 
-executor = ThreadPoolExecutor()
+html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FastAPI Table Example</title>
+    <link rel="stylesheet" href="http://127.0.0.1:8000/static/styles.css">
+</head>
+
+<script src="http://127.0.0.1:8000/static/helpers.js"></script>
+
+<body>
+<h2>RPC demo</h2>
+<table id="value-table">
+    <tbody>
+    <tr>
+        <th>Time</th>
+        <th>Action</th>
+        <th>The 'Language'</th>
+        <th>Action</th>
+    </tr>
+    <tr>
+        <td>JSON time</td>
+        <td>Data1</td>
+        <td>JSON</td>
+        <td>
+            <button onclick="updateCell('button1')" id='button1'>Refresh</button>
+        </td>
+    </tr>
+    <tr>
+        <td>RPC time</td>
+        <td>Data2</td>
+        <td>RPC request</td>
+        <td>
+            <button onclick="updateCell('button2')" id='button2'>Refresh</button>
+        </td>
+    </tr>
+    <tr>
+        <td>Streamed time</td>
+        <td>Data3</td>
+        <td>RPC stream</td>
+        <td>
+            <button disabled="true" onclick="updateCell('button2')">Refresh</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<script>
+    const socket = new WebSocket("ws://localhost:8000/ws");
+
+    socket.onmessage = (event) => {
+        const value = event.data;
+        const table = document.getElementById("value-table");
+        const cellToUpdate = table.rows[3].cells[1];
+    };
+
+</script>
+</body>
+</html>
+"""
 
 
-def stream_timestamp_data() -> str:
-    empty_request = TimestampMessage()
-    stream = stub.StreamTimestamp(empty_request)
-    for response in stream:
-        val = response.timestamp
-        yield val
-        time.sleep(1)
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        # Stream the updated value every second
+        await websocket.send_text(pendulum.now().to_datetime_string())
+        await asyncio.sleep(1)
 
 
-def update_table(table_data, request):
-    print("updating the table")
-    for streaming_data in stream_timestamp_data():
-        table_data.pop()
-        table_data.append(
-            {
-                "header1": "Streamed time",
-                "header2": streaming_data,
-                "header3": "RPC stream",
-            }
-        )
+@app.get("/action/{button_id}")
+def parse(button_id: str):
+    try:
+        if button_id == "button1":
+            url = "http://worldtimeapi.org/api/timezone/Europe/London"
+            response = requests.get(url)
+            data = response.json()
+            result = pendulum.parser.parse(data['datetime']).to_datetime_string()
+        else:
+            stub = ClockServiceStub(grpc.insecure_channel('localhost:50051'))
+            empty_request = TimestampMessage()
+            rpc_result = stub.GetTimestamp(empty_request)
+            result = rpc_result.timestamp
 
-        templates.TemplateResponse(
-            "index.html", {"request": request, "table_data": table_data}
-        )
-        # await asyncio.sleep(0)  # Allow other tasks to run
+        return {
+            'result': result
+        }
+    except Exception as e:
+        print(e)
 
 
-@app.get("/")
-async def read_root(request: Request):
-    # Dummy data for the table
-    empty_request = TimestampMessage()
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-    # gRPC Unary RPC call
-    rpc_time_result = stub.GetTimestamp(empty_request)
-
-    # Extract timestamp from the response
-    rpc_time_str = rpc_time_result.timestamp  # Replace with the actual attribute in your response
-
-    table_data = [
-        {"header1": "Time", "header2": "Action", "header3": "The 'Language'"},
-        {"header1": "JSON time", "header2": "Row 1 Data 2", "header3": "JSON"},
-        {"header1": "RPC time", "header2": rpc_time_str, "header3": "RPC request"},
-        {"header1": "Streamed time", "header2": "Row 3 Data 2", "header3": "RPC stream"},
-    ]
-
-    async def generate_updates():
-        async for streaming_data in stream_timestamp_data():
-            table_data.pop()
-            table_data.append(
-                {
-                    "header1": "Streamed time",
-                    "header2": streaming_data,
-                    "header3": "RPC stream",
-                }
-            )
-            yield templates.TemplateResponse("index.html", {"request": request, "table_data": table_data})
-            await asyncio.sleep(0)  # Allow other tasks to run
-
-    return generate_updates()  # No need for aiter here
 
 if __name__ == "__main__":
     import uvicorn

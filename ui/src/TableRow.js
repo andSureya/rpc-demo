@@ -52,34 +52,34 @@ const TableRow = ({ index, staticData, onUpdate }) => {
   }
 };
 
-//   const handleStreamTimestamp = () => {
-//   // Initialize the streaming call
-//     var messages = require('./ClockPb');
-//   const stream = grpc.invoke(ClockServiceClient.StreamTimestamp, {
-//     request: new messages.TimestampMessage(),
-//     onMessage: (response) => {
-//       const timestamp = response.toObject().timestamp;
-//       setData(timestamp);
-//       setLastRefreshed(new Date().toLocaleTimeString());
-//     },
-//     onEnd: (code, message, trailers) => {
-//       // Handle stream closure
-//       if (code === grpc.Code.OK) {
-//         console.log('Stream completed successfully');
-//       } else {
-//         console.error(`Stream closed with error: ${code}, message: ${message}`);
-//       }
-//     },
-//   });
-//
-//   // Cleanup the streaming call when the component unmounts
-//   return () => {
-//     // Close the streaming call (if not already closed)
-//     if (stream) {
-//       stream.close();
-//     }
-//   };
-// };
+  const handleStreamTimestamp = () => {
+  // Initialize the streaming call
+    var messages = require('./ClockPb');
+  const stream = grpc.invoke(ClockServiceClient.StreamTimestamp, {
+    request: new messages.TimestampMessage(),
+    onMessage: (response) => {
+      const timestamp = response.toObject().timestamp;
+      setData(timestamp);
+      setLastRefreshed(new Date().toLocaleTimeString());
+    },
+    onEnd: (code, message, trailers) => {
+      // Handle stream closure
+      if (code === grpc.Code.OK) {
+        console.log('Stream completed successfully');
+      } else {
+        console.error(`Stream closed with error: ${code}, message: ${message}`);
+      }
+    },
+  });
+
+  // Cleanup the streaming call when the component unmounts
+  return () => {
+    // Close the streaming call (if not already closed)
+    if (stream) {
+      stream.close();
+    }
+  };
+};
 
   const handleApiCall = async () => {
     setLoading(true);
